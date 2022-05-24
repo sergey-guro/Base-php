@@ -1,0 +1,54 @@
+version: "3"
+
+services:
+    application:
+        container_name: application
+        build:
+            dockerfile: docker/Dockerfile
+            context: .
+        ports:
+            - "8000:8000"
+        environment:
+            PHP_IDE_CONFIG: 'serverName=application'
+        volumes:
+            - ./:/var/www/app
+        extra_hosts:
+            - "host.docker.internal:host-gateway"
+
+    postgres:
+        image: postgres:13.3
+        environment:
+            POSTGRES_USER: postgres
+            POSTGRES_PASSWORD: qwerty
+            PGDATA: /data/postgres
+            POSTGRES_HOST_AUTH_METHOD: "trust"
+        volumes:
+            - postgres:/data/postgres
+        ports:
+            - "5432:5432"
+        depends_on:
+            - application
+
+    adminer:
+        container_name: adminer
+        build:
+            dockerfile: docker/adminer/Dockerfile
+            context: .
+        ports:
+            - "8181:8080"
+        depends_on:
+            - postgres
+
+    redis:
+        image: redis:alpine3.15
+        container_name: redis
+        ports:
+            - "6379:6379"
+        volumes:
+            - redis_data:/data
+        depends_on:
+            - postgres
+
+volumes:
+    postgres:
+    redis_data:
